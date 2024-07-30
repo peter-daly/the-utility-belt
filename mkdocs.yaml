@@ -1,0 +1,41 @@
+site_name: The Utility Belt
+theme: material
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+plugins:
+  - section-index
+  - search
+  - literate-nav:
+      nav_file: SUMMARY.md
+  - gen-files:
+      scripts:
+        - docs/scripts/gen_ref_pages.py
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_bases: false
+            show_root_heading: false
+            show_symbol_type_toc: false
+            show_if_no_docstring: true
+            members: false
+          rendering:
+            show_source: true
+  - plantuml:
+      puml_url: https://www.plantuml.com/plantuml/
+      num_workers: 8
+      puml_keyword: plantuml
+  - coverage:
+      page_name: code-coverage
+      html_report_dir: htmlcov
+nav:
+  - Home: index.md
+  - Code Reference: reference/
