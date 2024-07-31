@@ -1,5 +1,7 @@
 from typing import Generic, TypeVar
 
+import pytest
+
 from theutilitybelt.typing.generics import GenericTypeMap
 
 X = TypeVar("X")
@@ -67,58 +69,61 @@ class YxBytesFloat(YGeneric[bytes], XGeneric[float]):
     pass
 
 
-def test_generic_type_map():
-    m1 = GenericTypeMap(IntStr)
+@pytest.mark.parametrize(
+    "test_type, x, y",
+    [
+        (TestXY, X, Y),
+        (IntStr, int, str),
+        (IntFloat, int, float),
+        (IntY, int, Y),
+        (XyStrInt, str, int),
+        (YxBytesFloat, float, bytes),
+    ],
+)
+def test_two_generic_type_args(test_type: type, x: type, y: type):
+    mapping = GenericTypeMap(test_type)
+    assert mapping[X] is x
+    assert mapping[Y] is y
 
-    assert m1[X] is int
-    assert m1[Y] is str
 
-    m2 = GenericTypeMap(IntFloat)
+@pytest.mark.parametrize(
+    "test_type, x, y, z",
+    [
+        (IntStrFloat, int, str, float),
+        (IntByteFloat, int, bytes, float),
+        (IntYFloat, int, Y, float),
+        (IntStrBytes, int, str, bytes),
+        (XYBytes, X, Y, bytes),
+    ],
+)
+def test_three_generic_type_args(test_type: type, x: type, y: type, z: type):
+    mapping = GenericTypeMap(test_type)
+    assert mapping[X] is x
+    assert mapping[Y] is y
+    assert mapping[Z] is z
 
-    assert m2[X] is int
-    assert m2[Y] is float
 
-    m3 = GenericTypeMap(IntY)
-
-    assert m3[X] is int
-    assert m3[Y] is Y
-
-    m4 = GenericTypeMap(IntStrFloat)
-
-    assert m4[X] is int
-    assert m4[Y] is str
-    assert m4[Z] is float
-
-    m5 = GenericTypeMap(IntByteFloat)
-
-    assert m5[X] is int
-    assert m5[Y] is bytes
-    assert m5[Z] is float
-
-    m6 = GenericTypeMap(IntYFloat)
-
-    assert m6[X] is int
-    assert m6[Y] is Y
-    assert m6[Z] is float
-
-    m7 = GenericTypeMap(IntStrBytes)
-
-    assert m7[X] is int
-    assert m7[Y] is str
-    assert m7[Z] is bytes
-
-    m8 = GenericTypeMap(XYBytes)
-
-    assert m8[X] is X
-    assert m8[Y] is Y
-    assert m8[Z] is bytes
-
-    m9 = GenericTypeMap(XyStrInt)
-
-    assert m9[X] is str
-    assert m9[Y] is int
-
-    m10 = GenericTypeMap(YxBytesFloat)
-
-    assert m10["X"] is float
-    assert m10["Y"] is bytes
+@pytest.mark.parametrize(
+    "test_type, expected",
+    [
+        (TestXY, True),
+        (IntStr, False),
+        (IntY, True),
+        (IntFloat, False),
+        (TestXYZ, True),
+        (IntStrFloat, False),
+        (IntYFloat, True),
+        (IntByteFloat, False),
+        (XYBytes, True),
+        (IntYBytes, True),
+        (IntYBytes, True),
+        (IntStrBytes, False),
+        (XGeneric, True),
+        (YGeneric, True),
+        (XyStrInt, False),
+        (int, False),
+    ],
+)
+def test_is_generic_mapping_open(test_type: type, expected: bool):
+    mapping = GenericTypeMap(test_type)
+    assert mapping.is_generic_mapping_open() is expected

@@ -97,11 +97,17 @@ class GenericTypeMap:
         generic_definitions.reverse()
         generic_implementations.reverse()
 
-        generic_definitions = generic_definitions[: len(generic_implementations)]
-
         mapping = {}
 
         for idx, definition in enumerate(generic_definitions):
+            additions = dict(zip(definition.__args__, definition.__args__))
+            mapping = {**mapping, **additions}
+
+        reduced_generic_definitions = generic_definitions[
+            : len(generic_implementations)
+        ]
+
+        for idx, definition in enumerate(reduced_generic_definitions):
             implementation = generic_implementations[idx]
             additions = dict(zip(definition.__args__, implementation.__args__))
             mapping = {**mapping, **additions}
