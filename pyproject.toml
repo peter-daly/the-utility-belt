@@ -18,7 +18,7 @@ pyright = "^1.1.378"
 
 [tool.poetry.group.docs.dependencies]
 mkdocs = "^1.5.3"
-mkdocstrings = "^0.24.3"
+mkdocstrings = "^0.26.0"
 mkdocs-coverage = "^1.0.0"
 mkdocs-material = "^9.5.17"
 mkdocstrings-python = "^1.9.2"
