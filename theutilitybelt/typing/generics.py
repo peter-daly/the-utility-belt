@@ -1,6 +1,5 @@
 import types
 from collections.abc import Callable
-from queue import Queue
 from typing import (  # type: ignore
     Generic,
     Protocol,
@@ -8,6 +7,8 @@ from typing import (  # type: ignore
     _GenericAlias,  # type: ignore
     _SpecialGenericAlias,  # type: ignore
 )
+
+from theutilitybelt.collections.utils import Queue
 
 TypingGenericAlias = (_GenericAlias, _SpecialGenericAlias, types.GenericAlias)
 GenericDefinitionClasses = (Generic, Protocol)
@@ -52,7 +53,7 @@ class GenericTypeMap:
         if root_origin := (getattr(type_cls, "__origin__", None)):
             queue.put(root_origin)
 
-        while not queue.empty():
+        while not queue.is_empty():
             type_check = queue.get()
             if getattr(type_check, "__origin__", None) in GenericDefinitionClasses:
                 aliases.append(type_check)
@@ -72,7 +73,7 @@ class GenericTypeMap:
             queue.put(orig)
 
         aliases = []
-        while not queue.empty():
+        while not queue.is_empty():
             type_check = queue.get()
             if (
                 type(type_check) is _GenericAlias
@@ -154,8 +155,8 @@ def get_generic_bases(cls: type, filter: Callable[[type], bool] = lambda t: True
     queue = Queue()
     queue.put(cls)
     items = []
-    while not queue.empty():
-        t = queue.get_nowait()
+    while not queue.is_empty():
+        t = queue.get()
 
         for sub in getattr(t, "__orig_bases__", ()):
             queue.put(sub)
@@ -212,7 +213,7 @@ def get_generic_type_args(type: type):
     queue = Queue()
     queue.put(type)
 
-    while not queue.empty():
+    while not queue.is_empty():
         type_check = queue.get()
         if getattr(type_check, "__origin__", None) == Generic:
             return type_check.__args__

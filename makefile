@@ -17,6 +17,7 @@ test:
 	@echo "Running tests..."
 	@poetry run pytest .
 
+
 ci: lint format typecheck test
 
 publish:
