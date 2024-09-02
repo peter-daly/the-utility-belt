@@ -8,7 +8,7 @@ from typing import (  # type: ignore
     _SpecialGenericAlias,  # type: ignore
 )
 
-from theutilitybelt.collections.utils import Queue
+from theutilitybelt.collections.queue import Queue
 
 TypingGenericAlias = (_GenericAlias, _SpecialGenericAlias, types.GenericAlias)
 GenericDefinitionClasses = (Generic, Protocol)
