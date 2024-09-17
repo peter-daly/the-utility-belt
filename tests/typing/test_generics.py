@@ -127,3 +127,13 @@ def test_three_generic_type_args(test_type: type, x: type, y: type, z: type):
 def test_is_generic_mapping_open(test_type: type, expected: bool):
     mapping = GenericTypeMap(test_type)
     assert mapping.is_generic_mapping_open() is expected
+
+
+def test_is_singleton_per_type():
+    mapping1 = GenericTypeMap(IntY)
+    mapping2 = GenericTypeMap(IntY)
+    mapping3 = GenericTypeMap(IntStr)
+
+    assert mapping1 is mapping2
+
+    assert mapping1 is not mapping3

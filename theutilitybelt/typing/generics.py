@@ -14,7 +14,22 @@ TypingGenericAlias = (_GenericAlias, _SpecialGenericAlias, types.GenericAlias)
 GenericDefinitionClasses = (Generic, Protocol)
 
 
-class GenericTypeMap:
+class _GenericTypeMapMeta(type):
+    """
+    Metaclass for GenericTypeMap that implements caching of instances.
+    """
+
+    _cache = {}
+
+    def __call__(cls, mapped_type: type):
+        if mapped_type in cls._cache:
+            return cls._cache[mapped_type]
+        instance = super().__call__(mapped_type)  # Create a new instance
+        cls._cache[mapped_type] = instance  # Cache the new instance
+        return instance
+
+
+class GenericTypeMap(metaclass=_GenericTypeMapMeta):
     """
     A class that represents a mapping between generic types and their implementations.
 
