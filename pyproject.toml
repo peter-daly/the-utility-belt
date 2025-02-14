@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "the-utility-belt"
-version = "0.0.7"
+version = "0.1.0"
 description = ""
 authors = ["Peter Daly"]
 readme = "README.md"
