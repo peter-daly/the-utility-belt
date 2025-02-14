@@ -57,7 +57,7 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
         mapping = self._build_map(cls)
 
         for k, v in mapping.items():
-            self[k] = v
+            self._inner_map[self._lookup_key(k)] = v
 
     @classmethod
     def _get_generic_definitions(cls, type_cls: type):
@@ -149,7 +149,7 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
         return self._inner_map[self._lookup_key(key)]
 
     def __setitem__(self, key: TypeVar | str, value: type | TypeVar):
-        self._inner_map[self._lookup_key(key)] = value
+        raise ValueError("Cannot set items in a GenericTypeMap")
 
     def values(self):
         return self._inner_map.values()
@@ -159,6 +159,17 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
 
     def items(self):
         return self._inner_map.items()
+
+    def trace_get(self, key: TypeVar | str, default=None):
+        value = self.get(key, default)
+        while isinstance(value, TypeVar):
+            next_key = value
+            value = self.get(next_key, next_key)
+
+            if value is next_key:
+                break
+
+        return value
 
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, GenericTypeMap):

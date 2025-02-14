@@ -69,6 +69,18 @@ class YxBytesFloat(YGeneric[bytes], XGeneric[float]):
     pass
 
 
+class Parent(Generic[X]):
+    pass
+
+
+class Child(Parent[Y], Generic[Y]):
+    pass
+
+
+class GrandChild(Child[int]):
+    pass
+
+
 @pytest.mark.parametrize(
     "test_type, x, y",
     [
@@ -127,6 +139,23 @@ def test_three_generic_type_args(test_type: type, x: type, y: type, z: type):
 def test_is_generic_mapping_open(test_type: type, expected: bool):
     mapping = GenericTypeMap(test_type)
     assert mapping.is_generic_mapping_open() is expected
+
+
+@pytest.mark.parametrize(
+    (
+        "test_type",
+        "key",
+        "expected",
+    ),
+    [
+        (Parent, X, X),
+        (Child, X, Y),
+        (GrandChild, X, int),
+    ],
+)
+def test_trace_get(test_type, key, expected):
+    mapping = GenericTypeMap(test_type)
+    assert mapping.trace_get(key) is expected
 
 
 def test_is_singleton_per_type():
