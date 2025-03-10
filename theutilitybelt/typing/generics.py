@@ -1,3 +1,4 @@
+from operator import is_, ne
 import types
 from collections.abc import Callable
 from typing import (  # type: ignore
@@ -105,6 +106,19 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
         return aliases
 
     @classmethod
+    def _close_off_possible_type_aliases(cls, mapping: dict[str, TypeVar | type]):
+        found_link = False
+
+        for k, v in mapping.items():
+            if isinstance(v, TypeVar) and v is not k:
+                if v in mapping and mapping[v] is not v:
+                    mapping[k] = mapping[v]
+                    found_link = True
+
+        if found_link:
+            cls._close_off_possible_type_aliases(mapping)
+
+    @classmethod
     def _build_map(cls, type_cls: type) -> dict[str, TypeVar | type]:
         generic_definitions = cls._get_generic_definitions(type_cls)
 
@@ -127,6 +141,8 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
             implementation = generic_implementations[idx]
             additions = dict(zip(definition.__args__, implementation.__args__))
             mapping = {**mapping, **additions}
+
+        cls._close_off_possible_type_aliases(mapping)
 
         return mapping
 
@@ -160,21 +176,13 @@ class GenericTypeMap(metaclass=_GenericTypeMapMeta):
     def items(self):
         return self._inner_map.items()
 
-    def trace_get(self, key: TypeVar | str, default=None):
-        value = self.get(key, default)
-        while isinstance(value, TypeVar):
-            next_key = value
-            value = self.get(next_key, next_key)
-
-            if value is next_key:
-                break
-
-        return value
-
     def __eq__(self, __value: object) -> bool:
         if not isinstance(__value, GenericTypeMap):
             return False
         return self._inner_map == __value._inner_map
+
+    def __repr__(self) -> str:
+        return f"GenericTypeMap({self._inner_map})"
 
 
 def get_generic_bases(cls: type, filter: Callable[[type], bool] = lambda t: True):
@@ -193,20 +201,6 @@ def get_generic_bases(cls: type, filter: Callable[[type], bool] = lambda t: True
                 items.append(sub)
 
     return items
-
-
-def is_generic_type_closed(cls: type):
-    m = GenericTypeMap(cls)
-    return m.is_generic_mapping_closed()
-
-
-def is_generic_type_open(cls: type):
-    m = GenericTypeMap(cls)
-    return m.is_generic_mapping_open()
-
-
-def get_type_args(cls: type):
-    return getattr(cls, "__args__", ())
 
 
 def is_generic_type(tp: type):
@@ -241,7 +235,7 @@ def get_generic_type_args(type: type):
 
     while not queue.is_empty():
         type_check = queue.get()
-        if getattr(type_check, "__origin__", None) == Generic:
+        if getattr(type_check, "__origin__", None) in (Generic, Protocol):
             return type_check.__args__
 
         for base in getattr(type_check, "__orig_bases__", ()):
@@ -251,20 +245,23 @@ def get_generic_type_args(type: type):
     return ()
 
 
-def get_generic_types(cls: type):
-    mapping = GenericTypeMap(cls)
-    return tuple(mapping.values())
+def try_to_map_generic_args_to_open_type(
+    open_type: _GenericAlias, closed_type: type
+) -> type:
+    open_mapping = GenericTypeMap(open_type)
+    closed_mapping = GenericTypeMap(closed_type)
 
-
-def try_to_complete_generic(open_type: _GenericAlias, closed_type: type) -> type:
-    if not getattr(open_type, "__args__", None):
-        return open_type
-    if is_generic_type_closed(open_type):
+    if open_mapping.is_generic_mapping_closed():
         return open_type
 
-    mapping = GenericTypeMap(closed_type)
-    new_args = tuple([mapping.get(a, a) for a in open_type.__args__])
-    return open_type[new_args]
+    output_args = []
+
+    generic_args = get_generic_type_args(open_type)
+
+    for a in generic_args:
+        output_args.append(closed_mapping.get(a, a))
+
+    return open_type[tuple(output_args)]
 
 
 def get_generic_type(obj):

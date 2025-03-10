@@ -1,8 +1,12 @@
-from typing import Generic, TypeVar
+from typing import Generic, Protocol, TypeVar
 
 import pytest
 
-from theutilitybelt.typing.generics import GenericTypeMap
+from theutilitybelt.typing.generics import (
+    GenericTypeMap,
+    get_generic_type_args,
+    try_to_map_generic_args_to_open_type,
+)
 
 X = TypeVar("X")
 Y = TypeVar("Y")
@@ -81,6 +85,63 @@ class GrandChild(Child[int]):
     pass
 
 
+TOperation = TypeVar("TOperation")
+TOperationResult = TypeVar("TOperationResult")
+
+
+class Command:
+    pass
+
+
+TCommand = TypeVar("TCommand", bound=Command)
+
+
+class Query:
+    pass
+
+
+class QueryResult:
+    pass
+
+
+TQuery = TypeVar("TQuery", bound=Query)
+TQueryResult = TypeVar("TQueryResult", bound=QueryResult)
+
+
+class ACommand(Command):
+    pass
+
+
+class BQuery(Query):
+    pass
+
+
+class BQueryResult(QueryResult):
+    pass
+
+
+class OperationHandler(Protocol[TOperation, TOperationResult]):
+    pass
+
+
+class CommandHandler(OperationHandler[TCommand, None], Protocol[TCommand]):
+    pass
+
+
+class QueryHandler(
+    OperationHandler[TQuery, TQueryResult], Protocol[TQuery, TQueryResult]
+):
+    pass
+
+
+class AHandler(CommandHandler[ACommand]):
+    pass
+
+
+class BHandler(QueryHandler[BQuery, BQueryResult]):
+    pass
+
+
 @pytest.mark.parametrize(
     "test_type, x, y",
     [
@@ -141,21 +202,18 @@ def test_is_generic_mapping_open(test_type: type, expected: bool):
     assert mapping.is_generic_mapping_open() is expected
 
 
-@pytest.mark.parametrize(
-    (
-        "test_type",
-        "key",
-        "expected",
-    ),
-    [
-        (Parent, X, X),
-        (Child, X, Y),
-        (GrandChild, X, int),
-    ],
-)
-def test_trace_get(test_type, key, expected):
-    mapping = GenericTypeMap(test_type)
-    assert mapping.trace_get(key) is expected
+def test_recursive_linking_in_mappings():
+    a_map = GenericTypeMap(AHandler)
+    b_map = GenericTypeMap(BHandler)
+
+    assert a_map[TOperation] is ACommand
+    assert a_map[TOperationResult] is type(None)
+    assert a_map[TCommand] is ACommand
+
+    assert b_map[TOperation] is BQuery
+    assert b_map[TOperationResult] is BQueryResult
+    assert b_map[TQuery] is BQuery
+    assert b_map[TQueryResult] is BQueryResult
 
 
 def test_is_singleton_per_type():
@@ -166,3 +224,16 @@ def test_is_singleton_per_type():
     assert mapping1 is mapping2
 
     assert mapping1 is not mapping3
+
+
+@pytest.mark.parametrize(
+    "open_type, closed_type, result_type",
+    [
+        (OperationHandler, AHandler, OperationHandler[ACommand, None]),
+        (OperationHandler, BHandler, OperationHandler[BQuery, BQueryResult]),
+        (CommandHandler, AHandler, CommandHandler[ACommand]),
+        (QueryHandler, BHandler, QueryHandler[BQuery, BQueryResult]),
+    ],
+)
+def test_try_to_complete_generic(open_type, closed_type, result_type):
+    assert try_to_map_generic_args_to_open_type(open_type, closed_type) == result_type
