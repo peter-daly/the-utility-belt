@@ -4,6 +4,7 @@ import pytest
 
 from theutilitybelt.typing.generics import (
     GenericTypeMap,
+    get_generic_type_args,
     try_to_map_generic_args_to_open_type,
 )
 
@@ -236,3 +237,18 @@ def test_is_singleton_per_type():
 )
 def test_try_to_complete_generic(open_type, closed_type, result_type):
     assert try_to_map_generic_args_to_open_type(open_type, closed_type) == result_type
+
+
+@pytest.mark.parametrize(
+    "test_type, expected",
+    [
+        (TestXY, (X, Y)),
+        (CommandHandler, (TCommand,)),
+        (CommandHandler[TCommand], (TCommand,)),  # type: ignore
+        (AHandler, (TCommand,)),
+        (int, tuple()),
+    ],
+)
+def test_get_generic_type_args(test_type, expected):
+    result = get_generic_type_args(test_type)
+    assert result == expected

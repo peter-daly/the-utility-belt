@@ -234,8 +234,10 @@ def get_generic_type_args(type: type):
 
     while not queue.is_empty():
         type_check = queue.get()
-        if getattr(type_check, "__origin__", None) in (Generic, Protocol):
-            return type_check.__args__
+        if origin_type := getattr(type_check, "__origin__", None):
+            queue.put(origin_type)
+            if origin_type in GenericDefinitionClasses:
+                return type_check.__args__
 
         for base in getattr(type_check, "__orig_bases__", ()):
             queue.put(base)
