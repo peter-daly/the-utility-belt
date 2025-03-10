@@ -4,7 +4,6 @@ import pytest
 
 from theutilitybelt.typing.generics import (
     GenericTypeMap,
-    get_generic_type_args,
     try_to_map_generic_args_to_open_type,
 )
 

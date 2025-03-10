@@ -1,4 +1,3 @@
-from operator import is_, ne
 import types
 from collections.abc import Callable
 from typing import (  # type: ignore
