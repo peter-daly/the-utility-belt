@@ -1,5 +1,6 @@
 from typing import Generic, Protocol, TypeVar
 
+from click import Context
 import pytest
 
 from theutilitybelt.typing.generics import (
@@ -108,6 +109,9 @@ TQuery = TypeVar("TQuery", bound=Query)
 TQueryResult = TypeVar("TQueryResult", bound=QueryResult)
 
 
+TContext = TypeVar("TContext")
+
+
 class ACommand(Command):
     pass
 
@@ -139,6 +143,10 @@ class AHandler(CommandHandler[ACommand]):
 
 
 class BHandler(QueryHandler[BQuery, BQueryResult]):
+    pass
+
+
+class ContextMapper(Protocol[TContext]):
     pass
 
 
@@ -233,6 +241,7 @@ def test_is_singleton_per_type():
         (OperationHandler, BHandler, OperationHandler[BQuery, BQueryResult]),
         (CommandHandler, AHandler, CommandHandler[ACommand]),
         (QueryHandler, BHandler, QueryHandler[BQuery, BQueryResult]),
+        (ContextMapper[TCommand], AHandler, ContextMapper[ACommand]),  # type: ignore
     ],
 )
 def test_try_to_complete_generic(open_type, closed_type, result_type):

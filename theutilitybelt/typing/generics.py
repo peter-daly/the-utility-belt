@@ -260,7 +260,16 @@ def try_to_map_generic_args_to_open_type(
     generic_args = get_generic_type_args(open_type)
 
     for a in generic_args:
-        output_args.append(closed_mapping.get(a, a))
+        if from_closed := closed_mapping.get(a):
+            output_args.append(from_closed)
+            continue
+
+        if from_open := open_mapping.get(a):
+            if linked_to_open := closed_mapping.get(from_open):  # type: ignore
+                output_args.append(linked_to_open)
+                continue
+
+        output_args.append(a)
 
     return open_type[tuple(output_args)]
 
