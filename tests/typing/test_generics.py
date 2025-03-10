@@ -1,6 +1,5 @@
 from typing import Generic, Protocol, TypeVar
 
-from click import Context
 import pytest
 
 from theutilitybelt.typing.generics import (
@@ -242,6 +241,7 @@ def test_is_singleton_per_type():
         (CommandHandler, AHandler, CommandHandler[ACommand]),
         (QueryHandler, BHandler, QueryHandler[BQuery, BQueryResult]),
         (ContextMapper[TCommand], AHandler, ContextMapper[ACommand]),  # type: ignore
+        (CommandHandler[TCommand], int, CommandHandler[TCommand]),  # type: ignore
     ],
 )
 def test_try_to_complete_generic(open_type, closed_type, result_type):
